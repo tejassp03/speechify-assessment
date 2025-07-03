@@ -48,9 +48,11 @@ export default function HoverPlayer() {
   return ( 
 
     <div
+    id="hover-player"
     style={{
       position:'absolute',
       top: hoverInfo.top,
+      left: 20,
       height: hoverInfo.heightOfFirstLine,
       display:'flex',
       alignItems: 'center',

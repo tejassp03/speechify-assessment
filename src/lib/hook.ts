@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+
 /**
  * Gets bounding boxes for an element. This is implemented for you
  */
@@ -71,6 +72,7 @@ export function useHoveredParagraphCoordinate(
 ): HoveredElementInfo | null {
 
   const [hoverInfo, setHoverInfo] = useState<HoveredElementInfo | null>(null);
+  const [isHoveringBtn,setIsHoveringBtn] = useState(false);
 
   //An use effect to catch the hover of the element and pass the info onto the hoverInfo state variable.
   useEffect(()=> {
@@ -78,6 +80,23 @@ export function useHoveredParagraphCoordinate(
     const handleMouseAction = (e: MouseEvent) => {
 
       const coordinate = {x: e.pageX,y: e.pageY};
+      const playButton = document.getElementById('hover-player');
+
+      if(playButton){
+        const btnBounds = playButton.getBoundingClientRect();
+        if(
+          coordinate.x >= btnBounds.left  &&
+          coordinate.x <= btnBounds.right &&
+          coordinate.y >= btnBounds.top &&
+          coordinate.y <= btnBounds.bottom
+        )
+        {
+          //Creating a state to keep track of the button hovering state even when its out of the text area
+
+          setIsHoveringBtn(true);
+        }
+      }
+
 
       //parsing and checking if each element is inside the point or not
 
@@ -95,14 +114,17 @@ export function useHoveredParagraphCoordinate(
           return;
         }
       }
-      setHoverInfo(null);
+      if(!isHoveringBtn)
+      {
+        setHoverInfo(null);
+      }
     }
 
     // Adding a mousemove event listener to attach it to handleMouseAction
 
     window.addEventListener('mousemove', handleMouseAction);
     return ()=> window.removeEventListener('mousemove', handleMouseAction);
-  }, [parsedElements]);
+  }, [parsedElements, isHoveringBtn]);
   
   return hoverInfo;
 }
