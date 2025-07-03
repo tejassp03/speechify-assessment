@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 /**
  * Gets bounding boxes for an element. This is implemented for you
  */
@@ -22,13 +24,34 @@ export function getElementBounds(elem: HTMLElement) {
 export function isPointInsideElement(
   coordinate: { x: number; y: number },
   element: HTMLElement
-): boolean {}
+): boolean {
+
+  const bounds = getElementBounds(element);
+      /*Checking if the x coordinate is greater than the left most bound,
+    Checking if the x coordinate is lesser than the left most bound plus the width of the bound
+    same for the y coordinate as well.
+    */
+  return(
+    coordinate.x >= bounds.left  &&
+    coordinate.x <= bounds.left + bounds.width &&
+    coordinate.y >= bounds.top &&
+    coordinate.y <= bounds.top  + bounds.height
+  );
+
+
+
+}
 
 /**
  * **TBD:** Implement a function that returns the height of the first line of text in an element
  * We will later use this to size the HTML element that contains the hover player
  */
-export function getLineHeightOfFirstLine(element: HTMLElement): number {}
+export function getLineHeightOfFirstLine(element: HTMLElement): number {
+const elemStyle = window.getComputedStyle(element);
+const lineHeight = parseFloat(elemStyle.lineHeight);
+
+return lineHeight;
+}
 
 export type HoveredElementInfo = {
   element: HTMLElement;
@@ -45,4 +68,41 @@ export type HoveredElementInfo = {
  */
 export function useHoveredParagraphCoordinate(
   parsedElements: HTMLElement[]
-): HoveredElementInfo | null {}
+): HoveredElementInfo | null {
+
+  const [hoverInfo, setHoverInfo] = useState<HoveredElementInfo | null>(null);
+
+  //An use effect to catch the hover of the element and pass the info onto the hoverInfo state variable.
+  useEffect(()=> {
+
+    const handleMouseAction = (e: MouseEvent) => {
+
+      const coordinate = {x: e.pageX,y: e.pageY};
+
+      //parsing and checking if each element is inside the point or not
+
+      for(const element of parsedElements){
+
+        if(isPointInsideElement(coordinate,element))
+        {
+          const bounds = getElementBounds(element);
+          setHoverInfo({
+              element,
+              top: bounds.top,
+              left: bounds.left + bounds.width,
+              heightOfFirstLine: getLineHeightOfFirstLine(element)
+          });
+          return;
+        }
+      }
+      setHoverInfo(null);
+    }
+
+    // Adding a mousemove event listener to attach it to handleMouseAction
+
+    window.addEventListener('mousemove', handleMouseAction);
+    
+  }, [parsedElements]);
+
+  return hoverInfo;
+}

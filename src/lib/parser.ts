@@ -44,4 +44,74 @@ const IGNORE_LIST = [
  *            </body>;
  *            In this case, #content-1 should not be considered as a top level readable element.
  */
-export function getTopLevelReadableElementsOnPage(): HTMLElement[] {}
+export function getTopLevelReadableElementsOnPage(): HTMLElement[] {
+
+  const body =  document.body;
+  const result: HTMLElement[] = [];
+
+  function isReadable(element: HTMLElement) : boolean {
+    if(IGNORE_LIST.includes(element.tagName))
+    {
+      return false;
+    }
+
+    const text = element.textContent?.trim() || '' ;
+    if(text === '')
+    {
+      return false;
+    }
+
+    return true;
+
+  }
+
+  function hasNestedReadableElem(element: HTMLElement)
+  {
+    //Looping through all the children from the element to check if it has nested elements
+    for(const child of Array.from(element.children))
+    {
+      //checking if the child is also an HTML Element
+      if(child instanceof HTMLElement)
+      {
+          //Check if its also readable
+          if(isReadable(child))
+          {
+            return true;
+          }
+
+          if(hasNestedReadableElem(child))
+          {
+            return true;
+          }
+      }
+    }
+
+    return false;
+
+  }
+
+  //writing a function to now traverse the elements and push it to an array of Html Elements
+
+  function traverse(element: HTMLElement){
+    //Checking if the element is readable and doesnt have any nested elements, push it to the final array
+    if(isReadable(element) && !hasNestedReadableElem(element)){
+      result.push(element);
+      return;
+    }
+
+    //Creating an array from the element and traversing the children elements through the loop
+    Array.from(element.children).forEach(child =>{
+
+    if(child instanceof HTMLElement)
+    {
+      traverse(child);
+    }
+    });
+
+  }
+  
+  //Now traversing the entire body element
+  traverse(body);
+  return result;
+
+}
