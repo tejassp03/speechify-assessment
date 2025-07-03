@@ -101,8 +101,8 @@ export function useHoveredParagraphCoordinate(
     // Adding a mousemove event listener to attach it to handleMouseAction
 
     window.addEventListener('mousemove', handleMouseAction);
-    
+    return ()=> window.removeEventListener('mousemove', handleMouseAction);
   }, [parsedElements]);
-
+  
   return hoverInfo;
 }
