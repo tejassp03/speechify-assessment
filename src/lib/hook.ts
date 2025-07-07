@@ -26,21 +26,13 @@ export function isPointInsideElement(
   coordinate: { x: number; y: number },
   element: HTMLElement
 ): boolean {
-
-  const bounds = getElementBounds(element);
-      /*Checking if the x coordinate is greater than the left most bound,
-    Checking if the x coordinate is lesser than the left most bound plus the width of the bound
-    same for the y coordinate as well.
-    */
-  return(
-    coordinate.x >= bounds.left  &&
-    coordinate.x <= bounds.left + bounds.width &&
-    coordinate.y >= bounds.top &&
-    coordinate.y <= bounds.top  + bounds.height
+  const rect = element.getBoundingClientRect();
+  return (
+    coordinate.x >= rect.left &&
+    coordinate.x <= rect.right &&
+    coordinate.y >= rect.top &&
+    coordinate.y <= rect.bottom
   );
-
-
-
 }
 
 /**
@@ -48,10 +40,27 @@ export function isPointInsideElement(
  * We will later use this to size the HTML element that contains the hover player
  */
 export function getLineHeightOfFirstLine(element: HTMLElement): number {
-const elemStyle = window.getComputedStyle(element);
-const lineHeight = parseFloat(elemStyle.lineHeight);
-
-return lineHeight;
+  if (!element.textContent?.trim()) return 0;
+  
+  // First try the element's own computed style
+  const elementStyle = window.getComputedStyle(element);
+  const elementFontSize = parseFloat(elementStyle.fontSize);
+  
+  // If element has explicit font-size (not 16px default), use it
+  if (elementFontSize !== 16) {
+    return elementFontSize;
+  }
+  
+  // Otherwise check first child with text content
+  for (const child of Array.from(element.children)) {
+    if (child.textContent?.trim()) {
+      const childStyle = window.getComputedStyle(child as HTMLElement);
+      return parseFloat(childStyle.fontSize);
+    }
+  }
+  
+  // Fallback to element's font size
+  return elementFontSize;
 }
 
 export type HoveredElementInfo = {
@@ -72,31 +81,15 @@ export function useHoveredParagraphCoordinate(
 ): HoveredElementInfo | null {
 
   const [hoverInfo, setHoverInfo] = useState<HoveredElementInfo | null>(null);
-  const [isHoveringBtn,setIsHoveringBtn] = useState(false);
 
   //An use effect to catch the hover of the element and pass the info onto the hoverInfo state variable.
   useEffect(()=> {
 
     const handleMouseAction = (e: MouseEvent) => {
-
-      const coordinate = {x: e.pageX,y: e.pageY};
-      const playButton = document.getElementById('hover-player');
-
-      if(playButton){
-        const btnBounds = playButton.getBoundingClientRect();
-        if(
-          coordinate.x >= btnBounds.left  &&
-          coordinate.x <= btnBounds.right &&
-          coordinate.y >= btnBounds.top &&
-          coordinate.y <= btnBounds.bottom
-        )
-        {
-          //Creating a state to keep track of the button hovering state even when its out of the text area
-
-          setIsHoveringBtn(true);
-        }
-      }
-
+      const coordinate = {
+        x: e.clientX - window.scrollX,
+        y: e.clientY - window.scrollY,
+      };
 
       //parsing and checking if each element is inside the point or not
 
@@ -108,23 +101,20 @@ export function useHoveredParagraphCoordinate(
           setHoverInfo({
               element,
               top: bounds.top,
-              left: bounds.left + bounds.width,
+              left: bounds.left,
               heightOfFirstLine: getLineHeightOfFirstLine(element)
           });
           return;
         }
       }
-      if(!isHoveringBtn)
-      {
         setHoverInfo(null);
-      }
     }
 
     // Adding a mousemove event listener to attach it to handleMouseAction
 
     window.addEventListener('mousemove', handleMouseAction);
     return ()=> window.removeEventListener('mousemove', handleMouseAction);
-  }, [parsedElements, isHoveringBtn]);
+  }, [parsedElements]);
   
   return hoverInfo;
 }

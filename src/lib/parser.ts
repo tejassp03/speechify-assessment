@@ -50,19 +50,23 @@ export function getTopLevelReadableElementsOnPage(): HTMLElement[] {
   const result: HTMLElement[] = [];
 
   function isReadable(element: HTMLElement) : boolean {
-    if(IGNORE_LIST.includes(element.tagName))
-    {
+    // Check ignore list
+    if(IGNORE_LIST.includes(element.tagName)) {
       return false;
     }
 
-    const text = element.textContent?.trim() || '' ;
-    if(text === '')
-    {
+    // Check if element has text content
+    const text = element.textContent?.trim() || '';
+    if(text === '') {
+      return false;
+    }
+
+    // If element has exactly one child, consider the parent as readable instead
+    if(element.children.length === 1) {
       return false;
     }
 
     return true;
-
   }
 
   function hasNestedReadableElem(element: HTMLElement)
@@ -93,8 +97,14 @@ export function getTopLevelReadableElementsOnPage(): HTMLElement[] {
   //writing a function to now traverse the elements and push it to an array of Html Elements
 
   function traverse(element: HTMLElement){
-    //Checking if the element is readable and doesnt have any nested elements, push it to the final array
-    if(isReadable(element) && !hasNestedReadableElem(element)){
+    // Handle single child case - consider parent as readable
+    if(element.children.length === 1 && element.textContent?.trim()) {
+      result.push(element);
+      return;
+    }
+    
+    // Otherwise check if element is readable and doesn't have nested readable elements
+    if(isReadable(element) && !hasNestedReadableElem(element)) {
       result.push(element);
       return;
     }
